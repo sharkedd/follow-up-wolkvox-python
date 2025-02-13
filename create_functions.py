@@ -1,24 +1,16 @@
 import json
 import os
 
-def agregar_y_guardar(elemento, archivo="datos.json"):
-    datos = []
-    
-    # Si el archivo existe, cargar los datos previos
-    if os.path.exists(archivo):
-        with open(archivo, "r", encoding="utf-8") as f:
-            try:
-                datos = json.load(f)
-                if not isinstance(datos, list):  # Asegurar que es una lista
-                    datos = []
-            except json.JSONDecodeError:
-                datos = []
-
-    # Agregar el nuevo elemento
-    datos.append(elemento)
-
-    # Guardar de nuevo en el archivo
+def almacenarEnArchivo(lista_elementos, archivo):
+    """Guarda una lista de elementos en un archivo JSON, sobrescribiendo su contenido."""
     with open(archivo, "w", encoding="utf-8") as f:
-        json.dump(datos, f, ensure_ascii=False, indent=4)
+        json.dump(lista_elementos, f, ensure_ascii=False, indent=4)
 
+def almacenarContactos(lista_contactos, archivo="contactos.json"):
+    almacenarEnArchivo(lista_contactos, archivo)
 
+def almacenarCasos(lista_casos, archivo="casos.json"):
+    almacenarEnArchivo(lista_casos, archivo)
+
+def almacenarMensajes(lista_mensajes, archivo="mensajes.json"):
+    almacenarEnArchivo(lista_mensajes, archivo)

@@ -20,6 +20,8 @@ def fetch_chats():
     except requests.RequestException as e:
         print(f"Error al obtener los chats: {e}")
         return []
+    
+
 
 def fetch_conversations():
     """Obtiene la lista de conversaciones de Wolkvox."""
