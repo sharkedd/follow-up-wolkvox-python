@@ -1,41 +1,6 @@
-import requests
-import wolkvox_secrets
+import create_functions
+import wolkvox_api_requests
 
-# Intervalo de fechas que acotarán la solicitud.
-DATE_INI = "20250211000000"
-DATE_END = "20250212000000"
-
-def fetch_chats():
-    """Obtiene la lista de chats de Wolkvox."""
-    url = f"https://wv{wolkvox_secrets.WOLKVOX_SERVER}.wolkvox.com/api/v2/reports_manager.php?api=chat_1&date_ini={DATE_INI}&date_end={DATE_END}"
-    headers = {
-        "wolkvox_server": wolkvox_secrets.WOLKVOX_SERVER,
-        "wolkvox-token": wolkvox_secrets.WOLKVOX_TOKEN
-    }
-
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()  # Lanza un error si el request falla
-        return response.json().get("data", [])
-    except requests.RequestException as e:
-        print(f"Error al obtener los chats: {e}")
-        return []
-
-def fetch_conversations():
-    """Obtiene la lista de conversaciones de Wolkvox."""
-    url = f"https://wv{wolkvox_secrets.WOLKVOX_SERVER}.wolkvox.com/api/v2/reports_manager.php?api=chat_2&date_ini={DATE_INI}&date_end={DATE_END}"
-    headers = {
-        "wolkvox_server": wolkvox_secrets.WOLKVOX_SERVER,
-        "wolkvox-token": wolkvox_secrets.WOLKVOX_TOKEN
-    }
-
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        return response.json().get("data", [])
-    except requests.RequestException as e:
-        print(f"Error al obtener las conversaciones: {e}")
-        return []
 
 def obtain_conversation_info_from_chat(conn_id, conversations_array):
     """Busca la conversación relacionada con el chat dado."""
@@ -44,25 +9,35 @@ def obtain_conversation_info_from_chat(conn_id, conversations_array):
             return conversation.get("conversation")
     return None
 
+
 def main():
-    chats_data = fetch_chats()
+    chats_data = wolkvox_api_requests.fetch_chats()
     filtered_chats = [chat for chat in chats_data if chat.get("cod_act") == "Consulta"]
-    conversations_data = fetch_conversations()
+    conversations_data = wolkvox_api_requests.fetch_conversations()
 
     for chat in filtered_chats:
-        customer_name = chat.get("customer_name")
-        identificador = chat.get("customer_phone")
-        email = chat.get("customer_email")
+        #CONTACTOS
+        customer_name = chat.get("customer_name")   #Nombre y apellido
+        identificador = chat.get("customer_phone")  #Teléfono como identificador
+        email = chat.get("customer_email")          #Verificar que correo exista
+        #Agregar timezone
 
-        connection_id = chat.get("conn_id")
-        origen = chat.get("channel")
-        cod_act = chat.get("cod_act")
-        description_cod_act = chat.get("description_cod_act")
+        #CASOS
+        connection_id = chat.get("conn_id") #Identificador del caso
+        origen = chat.get("channel") #Origen del caso
+        cod_act = chat.get("cod_act") #Producto ---> (Se debe obtener la id de BeAware)
+        description_cod_act = chat.get("description_cod_act") #Tipo ---> (Se debe obtener la id de BeAware)
+        #subtipo --> (no aplica?)
+        #idcontacto --> Obtener al crear contacto
+        #asunto --> Inventar alguna combinación
         
-        date = chat.get("date")
-        agent_id = chat.get("agent_id")
-        agent_name = chat.get("agent_name")
-        comments = chat.get("comments")
+        #Campos extras
+        date = chat.get("date") #Fecha del chat
+        agent_name = chat.get("agent_name") #Agente que estuvo en la interación
+        comments = chat.get("comments") #Comentario sobre el chat, parece que no brindan mucha información
+
+        #Utilidad
+        agent_id = chat.get("agent_id") #Puede que sirva para obtener información de wolkvox
 
         filtered_conversations = obtain_conversation_info_from_chat(connection_id, conversations_data)
 
