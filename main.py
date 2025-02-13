@@ -26,9 +26,10 @@ def main():
 
         #Campos de contacto
         customer_name = chat.get("customer_name")
+        full_name = validaciones.procesar_nombre_apellido(customer_name)
         contacto = {
-            "nombre": chat.get("customer_name"),            #Nombre y apellido
-            "apellido": "OBTENER",
+            "nombre": full_name["name"],                    #Nombre
+            "apellido": full_name["last_name"],             #Apellido
             "identificador": chat.get("customer_phone"),    #Teléfono como identificador
             "email": chat.get("customer_email") ,           #Verificar que correo exista
             "timezone": "America/Santiago",                 #Zona Horaria 
