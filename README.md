@@ -16,7 +16,7 @@
 
 # create_functions.py
 
-# Contiene la funciones que almacenará la información a subir en diferentes json, para visualizarlas
+# Contiene la funciones que almacerán y procesarán la información a subir
 
 #
 
