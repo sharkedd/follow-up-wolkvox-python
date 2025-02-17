@@ -2,6 +2,7 @@ from email import message
 import create_functions
 import wolkvox_api_requests
 import validaciones
+import decode_images
 
 
 def obtain_conversation_info_from_chat(conn_id, conversations_array):
@@ -21,6 +22,8 @@ def main():
     contact_list = [] #Lista con contactos que se almacenará en JSON
     message_list = [] #Lista con mensajes que se almacenará en JSON
     case_list = [] #Lista con casos que se almacenará en JSON
+    contador = 0
+
 
     for chat in filtered_chats:
 
@@ -65,7 +68,7 @@ def main():
         create_functions.almacenarMensajes(customer_name)
         #Itera sobre todos los mensajes enviados en la conversación
         for mensaje in conversationInfo:
-            if(validaciones.es_mensaje_valido(mensaje.get('message'))): #Verifica que mensaje no sea imagen
+            if (validaciones.es_mensaje_valido(mensaje.get('message'))): #Verifica que mensaje no sea imagen
                 #Agrega mensaje modificado a la lista
                 message = {
                     "idobjeto":"OBTENER",
@@ -74,6 +77,12 @@ def main():
                     "privado":1
                 }
                 message_list.append(message)
+            else:
+                fecha_para_asunto = validaciones.transform_date_format(mensaje.get('date'))
+                asunto_mensaje = mensaje.get('from_name') + fecha_para_asunto + mensaje.get('customer_phone')
+                decode_images.save_image_from_base64(mensaje.get('message'), asunto_mensaje )
+                contador = contador + 1
+
 
         print(f"\n Interacciones totales: {len(conversationInfo)}")
         print("-" * 140)
@@ -82,6 +91,8 @@ def main():
     create_functions.almacenarContactos(contact_list)
     create_functions.almacenarMensajes(message_list)
     create_functions.almacenarCasos(case_list)
+    print("Imagenes obtenidas")
+    print(contador)
 
 if __name__ == "__main__":
     main()

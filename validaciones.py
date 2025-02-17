@@ -25,3 +25,6 @@ def procesar_nombre_apellido(nombre_completo):
         "name": partes[0],                      # El primer elemento es el nombre
         "last_name": " ".join(partes[1:])          # Todo lo demás se considera apellido
     }
+
+def transform_date_format(date_str):
+    return date_str.replace(" ", "").replace(":", "_")

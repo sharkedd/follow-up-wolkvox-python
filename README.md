@@ -2,9 +2,27 @@
 
 # ARCHIVOS:
 
+# beaware_api_requests.py
+
+# Contiene la lógica relacionada con la API de BeAware
+
+#
+
+# beaware_secrets.py
+
+# Obtiene del .env los secretos relacionados con la api de BeAware
+
+#
+
 # create_functions.py
 
-# Contendrá las funciones que crearan los contactos, casos y mensajes el BeAware
+# Contiene la funciones que almacenará la información a subir en diferentes json, para visualizarlas
+
+#
+
+# decode_images.py
+
+# Contiene la lógica relacionada para transformar las imágenes obtenidas del wolkvox
 
 #
 
