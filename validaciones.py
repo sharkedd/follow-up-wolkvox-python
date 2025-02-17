@@ -1,5 +1,5 @@
 def es_mensaje_valido(mensaje, limite_caracteres=1000):
-    """Descarta mensajes que comienzan con '<a href=\"' o que superan el límite de caracteres."""
+    """Descarta como mensaje válido aquellos que comienzan con '<a href=\"' o que superan el límite de caracteres."""
     return not mensaje.startswith('<a href="') and len(mensaje) <= limite_caracteres
 
 
@@ -27,4 +27,5 @@ def procesar_nombre_apellido(nombre_completo):
     }
 
 def transform_date_format(date_str):
+    """Elimina los espacios y reemplaza los doble puntos de la fecha"""
     return date_str.replace(" ", "").replace(":", "_")
