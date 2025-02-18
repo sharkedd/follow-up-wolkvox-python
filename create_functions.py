@@ -48,16 +48,13 @@ def process_messages(client, conversation_info, message_list, image_counter, ima
     - Si el mensaje es válido (texto), lo agrega a message_list.
     - Si no, asume que es una imagen y la decodifica, incrementando el contador.
     """
+    message = ""
     for mensaje in conversation_info:
         if validaciones.es_mensaje_valido(mensaje.get('message')):
             # Es un mensaje
-            message = {
-                "idobjeto": "***___OBTENER___***",
-                "tipoobjeto": "casos",
-                "texto": f"{mensaje.get('from')} {mensaje.get('from_name')}: {mensaje.get('message')}",
-                "privado": 1
-            }
-            message_list.append(message)
+
+            message = f"{message} {mensaje.get('from')} {mensaje.get('from_name')}: {mensaje.get('message')}<br>"
+        
         else:
             # Es una imagen
             fecha_para_asunto = validaciones.transform_date_format(mensaje.get('date'))
@@ -70,6 +67,16 @@ def process_messages(client, conversation_info, message_list, image_counter, ima
                 image_counter += 1
             else:
                 print("No se pudo extraer la imagen en base64 del mensaje.")
+    if(message):
+            message = validaciones.remove_emojis(message)
+            nota = {
+                "idobjeto": "***___OBTENER___***",
+                "tipoobjeto": "casos",
+                "texto": message,
+                "privado": 1
+            }
+            message_list.append(message)
+        
     return image_counter
 
 

@@ -1,7 +1,5 @@
 import requests
 import beaware_secrets
-import decode_images
-import imagedata
 import base64
 
 def login():
