@@ -2,9 +2,10 @@ import json
 import create_functions
 import decode_images
 import validaciones
+import beaware_api_requests
 
 def obtain_conversation_info_from_chat(conn_id, conversations_array):
-    """Busca y retorna la conversación (mensajes) del chat a través de la id de conexión."""
+    """Busca y retorna la la información de la conversación del chat a través de la id de conexión."""
     for conversation in conversations_array:
         if conversation.get("conn_id") == conn_id:
             return conversation.get("conversation")
@@ -40,7 +41,7 @@ def build_case(chat):
     }
 
 
-def process_messages(conversation_info, message_list, image_counter):
+def process_messages(client, conversation_info, message_list, image_counter, image_list): #ELIMINAR IMAGE_LIST
     """
     Procesa cada mensaje de la conversación.
     
@@ -49,6 +50,7 @@ def process_messages(conversation_info, message_list, image_counter):
     """
     for mensaje in conversation_info:
         if validaciones.es_mensaje_valido(mensaje.get('message')):
+            # Es un mensaje
             message = {
                 "idobjeto": "***___OBTENER___***",
                 "tipoobjeto": "casos",
@@ -57,14 +59,21 @@ def process_messages(conversation_info, message_list, image_counter):
             }
             message_list.append(message)
         else:
+            # Es una imagen
             fecha_para_asunto = validaciones.transform_date_format(mensaje.get('date'))
             asunto_mensaje = f"{mensaje.get('from_name')}{fecha_para_asunto}{mensaje.get('customer_phone')}"
-            decode_images.save_image_from_base64(mensaje.get('message'), asunto_mensaje)
-            image_counter += 1
+            file_format, base64_data = decode_images.extract_base64_image(mensaje.get('message'))
+            if file_format and base64_data:
+                image_list.append(base64_data)
+                beaware_api_requests.addFile(client, base64_data, file_format, 466, 6)
+                decode_images.save_image_from_base64(mensaje.get('message'), asunto_mensaje)
+                image_counter += 1
+            else:
+                print("No se pudo extraer la imagen en base64 del mensaje.")
     return image_counter
 
 
-def process_chat(chat, conversations_data, contact_list, case_list, message_list, image_counter):
+def process_chat(client, chat, conversations_data, contact_list, case_list, message_list, image_counter, image_list): #Eliminar image_list
     """Procesa un chat individual y actualiza las listas de contactos, casos y mensajes."""
     # Procesa el contacto y el caso
     contacto = build_contact(chat)
@@ -83,7 +92,7 @@ def process_chat(chat, conversations_data, contact_list, case_list, message_list
     create_functions.almacenarMensajes(chat.get('customer_name'))
 
     # Procesa los mensajes
-    image_counter = process_messages(conversation_info, message_list, image_counter)
+    image_counter = process_messages(client, conversation_info, message_list, image_counter, image_list)
     print(f"\nInteracciones totales: {len(conversation_info)}")
     print("-" * 140)
     return image_counter
@@ -106,4 +115,8 @@ def almacenarCasos(lista_casos, archivo="casos.json"):
 def almacenarMensajes(lista_mensajes, archivo="mensajes.json"):
     """Almacena los mensajes en el archivo mensajes.json"""
     almacenarEnArchivo(lista_mensajes, archivo)
+
+def almacenarImagenesData(lista_casos, archivo="imagenes_data.json"):
+    """Almacena los casps en el archivo casos.json"""
+    almacenarEnArchivo(lista_casos, archivo)
 
