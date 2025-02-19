@@ -5,7 +5,12 @@ import validaciones
 import beaware_api_requests
 
 def obtain_conversation_info_from_chat(conn_id, conversations_array):
-    """Busca y retorna la información de la conversación del chat a través de la id de conexión."""
+    """
+    Busca y retorna la información de la conversación del chat a través de la id de conexión.
+
+    :param conn_id: Id en Wolkvox de la conversación a buscar 
+    :param conversations_array: Array que contiene todas las conversaciones obtenidas
+    """
     # Un chat tiene un array llamado conversaciones, que contiene todos los mensajes asociados a un chat.
     for conversation in conversations_array:
         if conversation.get("conn_id") == conn_id:
@@ -42,7 +47,7 @@ def build_case(chat):
     }
 
 
-def process_messages(client, conversation_info, message_list, image_counter, image_list): #ELIMINAR IMAGE_LIST
+def process_messages(client, conversation_info, message_list, image_counter):
     """
     Procesa cada mensaje de la conversación.
     
@@ -62,7 +67,6 @@ def process_messages(client, conversation_info, message_list, image_counter, ima
             asunto_mensaje = f"{mensaje.get('from_name')}{fecha_para_asunto}{mensaje.get('customer_phone')}"
             file_format, base64_data = decode_images.extract_base64_image(mensaje.get('message'))
             if file_format and base64_data:
-                image_list.append(base64_data)
                 beaware_api_requests.addFile(client, base64_data, file_format, asunto_mensaje, 466, 6)
                 # Función save_image.... guarda la imagen en el computador 
                 # decode_images.save_image_from_base64(mensaje.get('message'), asunto_mensaje)
@@ -86,7 +90,7 @@ def process_messages(client, conversation_info, message_list, image_counter, ima
     return image_counter
 
 
-def process_chat(client, chat, conversations_data, contact_list, case_list, message_list, image_counter, image_list): #Eliminar image_list
+def process_chat(client, chat, conversations_data, contact_list, case_list, message_list, image_counter):
     """Procesa un chat individual y actualiza las listas de contactos, casos y mensajes."""
     # Procesa el contacto y el caso
     contacto = build_contact(chat)
@@ -105,7 +109,7 @@ def process_chat(client, chat, conversations_data, contact_list, case_list, mess
     create_functions.almacenarMensajes(chat.get('customer_name'))
 
     # Procesa los mensajes
-    image_counter = process_messages(client, conversation_info, message_list, image_counter, image_list)
+    image_counter = process_messages(client, conversation_info, message_list, image_counter)
     print(f"\nInteracciones totales: {len(conversation_info)}")
     print("-" * 140)
     return image_counter

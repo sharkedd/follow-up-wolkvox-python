@@ -6,6 +6,13 @@ from beaware_api_requests import login
 class APIClient:
     """Crea el cliente que se encargará de comunicarse con la api de BeAware"""
     def __init__(self, company, user, token, base_url="https://api.beaware360.com/ba360/apir/v10_5"):
+        """
+        Constructor del cliente que se comunicará con la API
+        :param company: Nombre de la compañia para ingresar a BeAware (ej: mcdonalds)
+        :param user: Credencial de usuario para iniciar sesión
+        :param token: Token obtenido al iniciar sesón
+        :param base_url: Url base a la que se realizarán las solicitudes
+        """
         self.company = company
         self.user = user
         self.token = token
@@ -56,5 +63,6 @@ class APIClient:
 
 
     def get_auth_token(self):
+        """Retorna y codifica el token de autenticación para realizar las solicitudes"""
         auth_string = f"{self.company}/{self.user}:{self.token}"
         return base64.b64encode(auth_string.encode('utf-8')).decode('utf-8')

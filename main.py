@@ -9,7 +9,6 @@ def main():
     contact_list = []  # Lista de contactos a almacenar en JSON
     message_list = []  # Lista de mensajes a almacenar en JSON
     case_list = []     # Lista de casos a almacenar en JSON
-    image_list = []    # Eliminar Image list
     image_counter = 0
 
 
@@ -28,13 +27,12 @@ def main():
     
     # Procesa cada chat filtrado
     for chat in filtered_chats:
-        image_counter = create_functions.process_chat(client, chat, conversations_data, contact_list, case_list, message_list, image_counter, image_list)
+        image_counter = create_functions.process_chat(client, chat, conversations_data, contact_list, case_list, message_list, image_counter)
 
     # Almacena las listas en los JSON correspondientes
     create_functions.almacenarContactos(contact_list)
     create_functions.almacenarMensajes(message_list)
     create_functions.almacenarCasos(case_list)
-    create_functions.almacenarImagenesData(image_list)
 
     print("Imágenes obtenidas:", image_counter)
 

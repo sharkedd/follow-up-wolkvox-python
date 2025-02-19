@@ -3,7 +3,7 @@ import beaware_secrets
 import base64
 
 def login():
-    """Ingresa las credenciales en BeAware, retornando el respectivo token para las solicitudes a la API"""
+    """Ingresa las credenciales en BeAware, retornando el respectivo token de usuario"""
     try:
         URL_LOGIN = "https://api.beaware360.com/ba360/apir/v10_5/login/auth"
         payload = {
@@ -75,5 +75,11 @@ def addFile(client, base64_file, file_format, asunto_mensaje, id_caso, id_usuari
 
 
 def createContact(client, contact):
+    """
+    Crea un contacto en BeAware con el objeto entregado
+
+    :param client: Cliente API que realizará la solicitud
+    :param contact: Objeto que contiene los parámetros del cliente
+    """
     print("a")
     return 1
