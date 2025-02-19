@@ -5,7 +5,8 @@ import validaciones
 import beaware_api_requests
 
 def obtain_conversation_info_from_chat(conn_id, conversations_array):
-    """Busca y retorna la la información de la conversación del chat a través de la id de conexión."""
+    """Busca y retorna la información de la conversación del chat a través de la id de conexión."""
+    # Un chat tiene un array llamado conversaciones, que contiene todos los mensajes asociados a un chat.
     for conversation in conversations_array:
         if conversation.get("conn_id") == conn_id:
             return conversation.get("conversation")
@@ -46,7 +47,7 @@ def process_messages(client, conversation_info, message_list, image_counter, ima
     Procesa cada mensaje de la conversación.
     
     - Si el mensaje es válido (texto), lo agrega a message_list.
-    - Si no, asume que es una imagen y la decodifica, incrementando el contador.
+    - Si no, asume que es un archivo, llamando a la función addFile para subirlo a BeAware
     """
     message = ""
     for mensaje in conversation_info:
@@ -62,19 +63,24 @@ def process_messages(client, conversation_info, message_list, image_counter, ima
             file_format, base64_data = decode_images.extract_base64_image(mensaje.get('message'))
             if file_format and base64_data:
                 image_list.append(base64_data)
-                beaware_api_requests.addFile(client, base64_data, file_format, 466, 6)
-                decode_images.save_image_from_base64(mensaje.get('message'), asunto_mensaje)
+                beaware_api_requests.addFile(client, base64_data, file_format, asunto_mensaje, 466, 6)
+                # Función save_image.... guarda la imagen en el computador 
+                # decode_images.save_image_from_base64(mensaje.get('message'), asunto_mensaje)
                 image_counter += 1
             else:
                 print("No se pudo extraer la imagen en base64 del mensaje.")
     if(message):
+            # Se eliminan los emojis de los mensajes, pues BeAware no los soporta
             message = validaciones.remove_emojis(message)
+            # Formato de nota que sigue BeAware
             nota = {
                 "idobjeto": "***___OBTENER___***",
                 "tipoobjeto": "casos",
                 "texto": message,
                 "privado": 1
             }
+            
+            #Incluir lógica para adjuntar nota a caso
             message_list.append(message)
         
     return image_counter

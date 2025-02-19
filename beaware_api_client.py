@@ -1,18 +1,20 @@
 import base64
 import requests
 
+from beaware_api_requests import login
+
 class APIClient:
+    """Crea el cliente que se encargará de comunicarse con la api de BeAware"""
     def __init__(self, company, user, token, base_url="https://api.beaware360.com/ba360/apir/v10_5"):
         self.company = company
         self.user = user
         self.token = token
         self.base_url = base_url
-        self.legacy_base_url = "https://api.beaware360.com/ba360"  # URL de la API antigua
+        self.legacy_base_url = "https://api.beaware360.com/ba360"  # URL de la API antigua (Se utiliza para subir archivos)
 
     def make_request(self, endpoint, method="GET", data=None, files=None, use_legacy=False):
         """
-        Realiza una solicitud a la API de BeAware.
-        
+        Realiza una solicitud a la API de BeAware
         :param endpoint: Ruta del endpoint (ej: "/uploadfile").
         :param method: Método HTTP (GET, POST, etc.).
         :param data: Datos a enviar (en JSON o form-data).
@@ -22,23 +24,36 @@ class APIClient:
         """
         url = f"{self.legacy_base_url}{endpoint}" if use_legacy else f"{self.base_url}{endpoint}"
         
-        # Configura los encabezados.
-        headers = {
-            "Authorization": f"Basic {self.get_auth_token()}",
-            # Si se envían archivos, no forzamos el Content-Type para que requests lo genere automáticamente.
-            "Content-Type": "application/json" if not files else None,
-        }
-        
-        try:
-            if files:
-                response = requests.request(method, url, headers=headers, data=data, files=files)
-            else:
-                response = requests.request(method, url, headers=headers, json=data)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"Error en la solicitud: {e}")
-            return None
+        # Intentaremos la solicitud hasta 2 veces: la original y una reintento si se obtiene 401.
+        for intento in range(2):
+            headers = {
+                "Authorization": f"Basic {self.get_auth_token()}",
+                # Si se envían archivos, dejamos que requests configure el Content-Type.
+                "Content-Type": "application/json" if not files else None,
+            }
+            
+            try:
+                if files:
+                    response = requests.request(method, url, headers=headers, data=data, files=files)
+                else:
+                    response = requests.request(method, url, headers=headers, json=data)
+                
+                # Si obtenemos un error 401 y es el primer intento, actualizamos el token y reintentamos.
+                if response.status_code == 401 and intento == 0:
+                    print("Error 401: Token expirado, renovando token...")
+                    self.token = login()  # Se asume que login() retorna un nuevo token
+                    continue  # Reintenta la solicitud con el nuevo token
+                            
+                response.raise_for_status()
+                return response.json()
+            
+            except requests.exceptions.RequestException as e:
+                print(f"Error en la solicitud: {e}")
+                return None
+
+        # Si después de reintentar la solicitud sigue habiendo error, se retorna None.
+        return None
+
 
     def get_auth_token(self):
         auth_string = f"{self.company}/{self.user}:{self.token}"
