@@ -18,17 +18,18 @@ def obtain_conversation_info_from_chat(conn_id, conversations_array):
     return None
 
 
-def build_contact(chat):
-    """Construye y retorna el diccionario de contacto a partir del chat."""
+def build_contact(client, chat):
+    """Construye y retorna el formato de contacto a partir del chat."""
     customer_name = chat.get("customer_name")
     full_name = validaciones.procesar_nombre_apellido(customer_name)
-    return {
+    contacto = {
         "nombre": full_name["name"],
         "apellido": full_name["last_name"],
         "identificador": chat.get("customer_phone"),
         "email": chat.get("customer_email"),
         "timezone": "America/Santiago",
     }
+    return beaware_api_requests.createContact(client, contacto)
 
 
 def build_case(chat):
@@ -94,11 +95,32 @@ def process_messages(client, conversation_info, message_list, image_counter):
 def process_chat(client, chat, conversations_data, contact_list, case_list, message_list, image_counter):
     """Procesa un chat individual y actualiza las listas de contactos, casos y mensajes."""
     # Procesa el contacto y el caso
-    contacto = build_contact(chat)
+    contacto = build_contact(client, chat)
+    
+    if not contacto:
+        return image_counter
+    
+    contact_list.append(
+        {
+            "id_contacto": contacto.get('id'),
+            "identificador": contacto.get('identificador'),
+            "nombre": contacto.get('nombre'),
+            "apellido": contacto.get('apellido')
+        })
+
+
+    # AGREGAR LÓGICA PARA CREAR CONTACTO EN BE AWARE
+    # SI CONTACTO SE CREA EXITOSAMENTE, OBTENER ID Y AGREGAR A LISTA
+    # SI NO, CANCELAR EL FLUJO CORRESPONDIENTE AL CONTACTO, Y SEGUIR CON EL SIGUIENTE
     contact_list.append(contacto)
+
     caso = build_case(chat)
+    # AHORA, CON EL CONTACTO CREADO, SE DEBE ASIGNAR LA ID DE BEAWARE AL FORMATO CASO, Y CREAR ESTE.
+    # AGREGAR LÓGICA PARA CREAR CASO EN BEAWARE, SI OCURRE UN PROBLEMA CON ESTO, CONTINUAR CON EL SIGUIENTE
+    # SE DEBEN OBTENER LAS TIPIFICACIONES 
     case_list.append(caso)
 
+    # UNA VEZ CREADO EL CASO, SE DEBE OBTENER LA ID DE ESTE, PARA LUEGO ASIGNAR LAS NOTAS Y ARCHIVOS CORRESPONDIENTES AL CASO
     # Obtiene la conversación del chat
     conversation_info = obtain_conversation_info_from_chat(chat.get("conn_id"), conversations_data)
     if not conversation_info:

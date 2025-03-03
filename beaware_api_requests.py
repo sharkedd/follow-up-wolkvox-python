@@ -67,6 +67,7 @@ def addFile(client, base64_file, file_format, asunto_mensaje, id_caso, id_usuari
         # Realiza la solicitud POST utilizando el cliente API
         # Se utiliza 'use_legacy=True' para usar la URL base antigua (Sólo esta puede subir archivos)
         response = client.make_request(endpoint, method="POST", data=payload, files=files, use_legacy=True)
+        response.raise_for_status()  # Lanza una excepción si la respuesta no es 200 OK        
         print("Archivo agregado exitosamente:", response)
         return response
     except requests.exceptions.HTTPError as http_err:
@@ -85,13 +86,13 @@ def obtainContacts(client):
         contacts = response['data']
 
         for contact in contacts:
-            contact_tel = contact.get('fono', None)[0]
             contact_iden = contact.get('identificador', None)
-            telefono = validaciones.formatear_telefono(contact_iden, contact_tel)
+            telefono = validaciones.formatear_telefono(contact_iden)
             if not telefono:
-                #print("Telefono no existe")
-                #print(f"ident: {contact_iden}, tel: {contact_tel} \n")
-                # Agregar Lógica en el caso raro de que no se encuentre el teléfono
+                #En caso de que el teléfono no sea válido, no se insertará en la lista de los contactos existentes
+                #Esto es debido a que se tomo la decisión, de que los contactos de form y de wsp, sean diferentes.
+                #En caso de que se quiera modificar esto, existe una función que obtiene el identificador, en conjunto del teléfono, retornando el que corresponda al número
+                #Porque en wsp, el teléfono esta en identificador, en formweb, está en el campo telefono
                 continue
             contact = {
                 "id_contacto": contact.get('id'),
@@ -116,5 +117,20 @@ def createContact(client, contact):
     :param client: Cliente API que realizará la solicitud
     :param contact: Objeto que contiene los parámetros del cliente
     """
-    print("a")
-    return 1
+    endpoint = "/contacto/add"
+    payload = contact
+
+    try:
+        response = client.make_request(endpoint, method="POST", data=payload)
+        response.raise_for_status()  # Lanza una excepción si la respuesta no es 200 OK
+
+        data = response.json()
+        contact = data['data']
+        print(f"Contacto creado en BeAware para {contact['nombre']} {contact['apellido']}")
+        return contact
+
+    except requests.exceptions.HTTPError as http_err:
+        print(f"Error HTTP al crear contacto: {http_err}")
+    except Exception as error:
+        print("Error en la solicitud al crear contacto:", error)
+    return None
