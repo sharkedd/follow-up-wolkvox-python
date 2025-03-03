@@ -1,3 +1,4 @@
+from urllib import response
 import requests
 import beaware_secrets
 import base64
@@ -18,7 +19,6 @@ def login():
         }
 
         response = requests.post(URL_LOGIN, json=payload, headers=headers)
-        response.raise_for_status()  # Lanza una excepción si la respuesta no es 200 OK
 
         data = response.json()
         token = data.get("token")
@@ -67,7 +67,6 @@ def addFile(client, base64_file, file_format, asunto_mensaje, id_caso, id_usuari
         # Realiza la solicitud POST utilizando el cliente API
         # Se utiliza 'use_legacy=True' para usar la URL base antigua (Sólo esta puede subir archivos)
         response = client.make_request(endpoint, method="POST", data=payload, files=files, use_legacy=True)
-        response.raise_for_status()  # Lanza una excepción si la respuesta no es 200 OK        
         print("Archivo agregado exitosamente:", response)
         return response
     except requests.exceptions.HTTPError as http_err:
@@ -124,8 +123,7 @@ def createContact(client, contact):
         response = client.make_request(endpoint, method="POST", data=payload)
         response.raise_for_status()  # Lanza una excepción si la respuesta no es 200 OK
 
-        data = response.json()
-        contact = data['data']
+        contact = response['data']
         print(f"Contacto creado en BeAware para {contact['nombre']} {contact['apellido']}")
         return contact
 
@@ -133,4 +131,53 @@ def createContact(client, contact):
         print(f"Error HTTP al crear contacto: {http_err}")
     except Exception as error:
         print("Error en la solicitud al crear contacto:", error)
+    return None
+
+def createCase(client, case):
+    """
+    Crea un caso en BeAware con el objeto entregado
+
+    :param client: Cliente API que realizará la solicitud
+    :param case: Objeto que contiene los parámetros del caso
+    """
+    endpoint = "/caso/add"
+    payload = case
+
+    try:
+        response = client.make_request(endpoint, method="POST", data=payload)
+
+        caso = response['data']
+        print(f"Caso creado en BeAware")
+        return caso
+
+    except requests.exceptions.HTTPError as http_err:
+        print(f"Error HTTP al crear contacto: {http_err}")
+    except Exception as error:
+        print("Error en la solicitud al crear contacto:", error)
+    return None
+
+def obtainProducts(client):
+    endpoint = "/producto/get"
+
+    try:
+        response = client.make_request(endpoint)
+        products = response['data']
+        return [{"id": item["id"], "nombre": item["nombre"]} for item in products]
+    except requests.exceptions.HTTPError as http_err:
+        print(f"Error HTTP obtener los tipos: {http_err}")
+    except Exception as error:
+        print("Error en la solicitud al obtener los tipos:", error)
+    return None
+
+def obtainTypes(client):
+    endpoint = "/tipo/get"
+
+    try:
+        response = client.make_request(endpoint)
+        types = response['data']
+        return [{"id": item["id"], "nombre": item["nombre"]} for item in types]
+    except requests.exceptions.HTTPError as http_err:
+        print(f"Error HTTP obtener los tipos: {http_err}")
+    except Exception as error:
+        print("Error en la solicitud al obtener los tipos:", error)
     return None

@@ -72,26 +72,39 @@ def findContact(identificador, contact_list):
     """
     return next((c for c in contact_list if c["identificador"] == identificador), None) 
 
-def build_case(chat, case_list):
+
+def build_case(chat, case_list, contact_id, types):
     """Construye y retorna el diccionario del caso a partir del chat."""
     asunto = (
         f"{chat.get('date')}-{chat.get('cod_act')}/"
         f"{chat.get('description_cod_act')}-{chat.get('conn_id')}"
     )
 
+    id_producto = get_product_id_by_cod_act(chat.get("cod_act"), types)
+
+    # QUE HACER EN CASO DE QUE EL PRODUCTO NO SE ENCUENTRE
+    if not id_producto:
+        id_producto = 4 # MIENTRAS TANTO, SI NO SE ENCUENTRA EL PRODUCTO, SE PASARÁ COMO "Consulta"
+
     caso = {
-        "idcontacto": "***___OBTENER___***",
-        "idproducto": chat.get("cod_act"),
-        "idtipo": chat.get("description_cod_act"),
+        "idcontacto": contact_id,
+        "idproducto": id_producto,
+        "idtipo": 0, # EN LO QUE LLEGA FELIPE PARA RESPONDER DUDAS, SE UTILIZARÁ TIPO Y SUBTIPO 0
         "subtipo": "***___OBTENER___***",
         "asunto": asunto,
         "origen": chat.get("channel"),
     }
 
+     # Intentar crear el contacto en BeAware
+    
+
     case_list.append(caso)
     return caso
 
+def get_product_id_by_cod_act(cod_act, types):
+    return next((t["id"] for t in types if t["nombre"] == cod_act), None)
 
+    
 
 def process_messages(client, conversation_info, message_list, image_counter):
     """
@@ -137,18 +150,24 @@ def process_messages(client, conversation_info, message_list, image_counter):
     return image_counter
 
 
-def process_chat(client, chat, conversations_data, contact_list, case_list, message_list, image_counter):
+def process_chat(client, chat, conversations_data, contact_list, case_list, message_list, types, image_counter):
     """Procesa un chat individual y actualiza las listas de contactos, casos y mensajes."""
     # Procesa el contacto
     contacto = build_contact(client, chat, contact_list)
     if not contacto:
+        print("Fallo al crear u obtener contacto")
+        return image_counter
+    
+    id_contacto = contacto.get("id_contacto")
+    if not id_contacto:
+        print("Fallo al obtener la id del contacto")
         return image_counter
 
     # AGREGAR LÓGICA PARA CREAR CONTACTO EN BE AWARE
     # SI CONTACTO SE CREA EXITOSAMENTE, OBTENER ID Y AGREGAR A LISTA
     # SI NO, CANCELAR EL FLUJO CORRESPONDIENTE AL CONTACTO, Y SEGUIR CON EL SIGUIENTE
 
-    caso = build_case(chat, case_list)
+    caso = build_case(chat, case_list, id_contacto, types)
     if not caso:
         return image_counter
     # AHORA, CON EL CONTACTO CREADO, SE DEBE ASIGNAR LA ID DE BEAWARE AL FORMATO CASO, Y CREAR ESTE.
