@@ -1,4 +1,5 @@
 import re
+import unicodedata
 
 def es_mensaje_valido(mensaje, limite_caracteres=1000):
     """Descarta como mensaje válido aquellos que comienzan con '<a href=\"' o que superan el límite de caracteres."""
@@ -28,9 +29,11 @@ def procesar_nombre_apellido(nombre_completo):
         "last_name": " ".join(partes[1:])          # Todo lo demás se considera apellido
     }
 
+
 def transform_date_format(date_str):
-    """Elimina los espacios y reemplaza los doble puntos de la fecha"""
+    """Elimina los espacios y reemplaza los doble puntos de la fecha con barra baja"""
     return date_str.replace(" ", "").replace(":", "_")
+
 
 def remove_emojis(text):
     """Abarca los unicode de los emojis, y los elimina del texto"""
@@ -42,3 +45,57 @@ def remove_emojis(text):
         u"\U0001F1E0-\U0001F1FF"  # banderas
         "]+", flags=re.UNICODE)
     return emoji_pattern.sub(r'', text)
+
+def limpiar_texto(texto):
+    """Elimina espacios y normaliza el texto eliminando caracteres invisibles."""
+    if texto is None:
+        return ""
+    texto = texto.strip()  # Eliminar espacios al inicio y al final
+    return texto.replace(" ", "")  # Eliminar todos los espacios
+
+import re
+
+def formatear_telefono(number):
+    """
+    Formatea el número telefónico entregado, convirtiendolo a 569XXXXXXXX
+    Retorna el teléfono formateado
+    En caso de que el teléfono entregado no sea válido, returna null"""
+    # Eliminar caracteres no numéricos
+    cleaned_number = re.sub(r'\D', '', number)
+    
+    # Si tiene exactamente 9 dígitos y empieza con 9
+    if re.fullmatch(r'9\d{8}', cleaned_number):
+        return f"56{cleaned_number}"
+    
+    # Si tiene exactamente 8 dígitos
+    elif re.fullmatch(r'\d{8}', cleaned_number):
+        return f"569{cleaned_number}"
+    
+    # Si tiene exactamente 11 dígitos y ya comienza con 569 (formato correcto)
+    elif re.fullmatch(r'569\d{8}', cleaned_number):
+        return cleaned_number
+    
+    else:
+        print("telefono invalido")
+        return None  # Retornar el original si es inválido
+
+
+## FUNCIÓN QUE OBTENIE CAMPOS DE IDENTIFICADOR Y TELEFONOS DE CONTACTOS DE BE AWARE, 
+## Lo que ocurre, es que si el contacto fue creado por wsp, su teléfono estará en el identificador, pero si vino por el formulario web, este se encontrará en teléfonos
+## Debido a esto, se creo esta función que trabaja con ambos valores, retornando el que corresponde al número
+# def obtener_telefono(identificador, telefono):
+#     """Obtiene 2 valores, retornando el que corresponda al teléfono. En caso contrario, retorna null"""
+#     # Patrón de número telefónico
+#     identificador_sin_espacios = limpiar_texto(identificador)      
+#     telefono_sin_espacios = limpiar_texto(telefono)
+
+#     patron_telefono = re.compile(r"^(\+?56)?\s?(0?9)\s?[98765432]\d{7}$")
+#     # Verificar cuál de los valores coincide con el patrón de teléfono
+#     if patron_telefono.match(identificador_sin_espacios):
+#         return identificador_sin_espacios
+#     elif patron_telefono.match(telefono_sin_espacios):
+#         return telefono_sin_espacios
+#     else:
+#         print(f"Valor que no funcionó: \"{identificador_sin_espacios}\" y \"{telefono_sin_espacios}\"")
+#         return None 
+

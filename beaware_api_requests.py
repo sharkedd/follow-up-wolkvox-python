@@ -2,6 +2,8 @@ import requests
 import beaware_secrets
 import base64
 
+import validaciones
+
 def login():
     """Ingresa las credenciales en BeAware, retornando el respectivo token de usuario"""
     try:
@@ -73,6 +75,39 @@ def addFile(client, base64_file, file_format, asunto_mensaje, id_caso, id_usuari
         print("Error en la solicitud:", error)
     return None
 
+def obtainContacts(client):
+    endpoint = "/contacto/get/?pagina=1&cantidad=15000"
+    contacts_array = []
+    try:
+        # Realiza la solicitud GET utilizando el cliente API
+        # Como la Request utiliza la API nueva, y no necesita datos, sólo se inserta el endpoint en conjunto de su método
+        response = client.make_request(endpoint, method="GET")
+        contacts = response['data']
+
+        for contact in contacts:
+            contact_tel = contact.get('fono', None)[0]
+            contact_iden = contact.get('identificador', None)
+            telefono = validaciones.formatear_telefono(contact_iden, contact_tel)
+            if not telefono:
+                #print("Telefono no existe")
+                #print(f"ident: {contact_iden}, tel: {contact_tel} \n")
+                # Agregar Lógica en el caso raro de que no se encuentre el teléfono
+                continue
+            contact = {
+                "id_contacto": contact.get('id'),
+                "identificador": telefono,
+                "nombre": contact.get('nombre'),
+                "apellido": contact.get('apellido')
+            }
+            contacts_array.append(contact)
+
+        return contacts_array
+    
+    except requests.exceptions.HTTPError as http_err:
+        print(f"Error HTTP: {http_err}")
+    except Exception as error:
+        print("Error en la solicitud:", error)
+    return None
 
 def createContact(client, contact):
     """

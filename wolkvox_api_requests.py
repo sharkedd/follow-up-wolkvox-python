@@ -4,7 +4,7 @@ import wolkvox_secrets
 #Intervalo de fechas que acotarán la solicitud.
 #Formato: YYYYmmddHHiiss
 DATE_INI = "20250218000000"
-DATE_END = "20250219000000"
+DATE_END = "20250303000000"
 
 def fetch_chats():
     """Obtiene la lista de chats de Wolkvox."""

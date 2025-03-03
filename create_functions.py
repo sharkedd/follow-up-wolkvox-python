@@ -67,10 +67,11 @@ def process_messages(client, conversation_info, message_list, image_counter):
             asunto_mensaje = f"{mensaje.get('from_name')}{fecha_para_asunto}{mensaje.get('customer_phone')}"
             file_format, base64_data = decode_images.extract_base64_image(mensaje.get('message'))
             if file_format and base64_data:
-                beaware_api_requests.addFile(client, base64_data, file_format, asunto_mensaje, 466, 6)
-                # Función save_image.... guarda la imagen en el computador 
-                # decode_images.save_image_from_base64(mensaje.get('message'), asunto_mensaje)
-                image_counter += 1
+                print("No se subio imagen por codigo comentado")
+                # beaware_api_requests.addFile(client, base64_data, file_format, asunto_mensaje, 466, 6)
+                # # Función save_image.... guarda la imagen en el computador 
+                # # decode_images.save_image_from_base64(mensaje.get('message'), asunto_mensaje)
+                # image_counter += 1
             else:
                 print("No se pudo extraer la imagen en base64 del mensaje.")
     if(message):
@@ -114,6 +115,14 @@ def process_chat(client, chat, conversations_data, contact_list, case_list, mess
     print("-" * 140)
     return image_counter
 
+def findContact(contact_identifier, contact_array):
+    """
+    Busca un contacto a través de su identificador en el array de contactos
+
+    :param contact_identifier: Identificador del contacto, corresponde al teléfono
+    :param contact_array: Array que contiene los contactos obtenidos de BeAware, junto a los creados en ejecución
+    """
+    return 1
 
 
 def almacenarEnArchivo(lista_elementos, archivo):

@@ -14,6 +14,7 @@ def main():
 
     # Obtención de los datos de Wolkvox
     chats_data = wolkvox_api_requests.fetch_chats()
+
     # Filtra chats con el código de actividad "Consulta"
     filtered_chats = [chat for chat in chats_data if chat.get("cod_act") == "Consulta"]
     conversations_data = wolkvox_api_requests.fetch_conversations()
@@ -24,6 +25,9 @@ def main():
         raise Exception("No se pudo obtener el token")
     
     client = APIClient(beaware_secrets.COMPANY, beaware_secrets.USER, token)
+
+    contacs_data = beaware_api_requests.obtainContacts(client)
+
     
     # Procesa cada chat filtrado
     for chat in filtered_chats:
