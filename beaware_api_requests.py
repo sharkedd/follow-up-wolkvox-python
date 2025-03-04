@@ -2,6 +2,7 @@ from urllib import response
 import requests
 import beaware_secrets
 import base64
+import json
 
 import validaciones
 
@@ -94,7 +95,7 @@ def obtainContacts(client):
                 #Porque en wsp, el teléfono esta en identificador, en formweb, está en el campo telefono
                 continue
             contact = {
-                "id_contacto": contact.get('id'),
+                "id": contact.get('id'),
                 "identificador": telefono,
                 "nombre": contact.get('nombre'),
                 "apellido": contact.get('apellido')
@@ -117,12 +118,9 @@ def createContact(client, contact):
     :param contact: Objeto que contiene los parámetros del cliente
     """
     endpoint = "/contacto/add"
-    payload = contact
 
     try:
-        response = client.make_request(endpoint, method="POST", data=payload)
-        response.raise_for_status()  # Lanza una excepción si la respuesta no es 200 OK
-
+        response = client.make_request(endpoint, method="POST", data=contact)
         contact = response['data']
         print(f"Contacto creado en BeAware para {contact['nombre']} {contact['apellido']}")
         return contact
@@ -141,11 +139,9 @@ def createCase(client, case):
     :param case: Objeto que contiene los parámetros del caso
     """
     endpoint = "/caso/add"
-    payload = case
 
     try:
-        response = client.make_request(endpoint, method="POST", data=payload)
-
+        response = client.make_request(endpoint, method="POST", data=case)
         caso = response['data']
         print(f"Caso creado en BeAware")
         return caso
@@ -180,4 +176,19 @@ def obtainTypes(client):
         print(f"Error HTTP obtener los tipos: {http_err}")
     except Exception as error:
         print("Error en la solicitud al obtener los tipos:", error)
+    return None
+
+def addNotes(client, note):
+
+    endpoint = "/actividad/add"
+
+    try:
+        response = client.make_request(endpoint, method="POST", data=note)
+        beaware_note = response['data']
+        print("Nota añadida con éxito")
+        return beaware_note
+    except requests.exceptions.HTTPError as http_err:
+        print(f"Error HTTP al asignar la nota: {http_err}")
+    except Exception as error:
+        print("Error en la solicitud al asignar las notas:", error)
     return None

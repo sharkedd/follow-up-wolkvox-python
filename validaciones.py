@@ -38,12 +38,19 @@ def transform_date_format(date_str):
 def remove_emojis(text):
     """Abarca los unicode de los emojis, y los elimina del texto"""
     emoji_pattern = re.compile(
-        "["
-        u"\U0001F600-\U0001F64F"  # emoticones
-        u"\U0001F300-\U0001F5FF"  # símbolos y pictogramas
-        u"\U0001F680-\U0001F6FF"  # transporte y mapas
-        u"\U0001F1E0-\U0001F1FF"  # banderas
-        "]+", flags=re.UNICODE)
+        "[\U0001F600-\U0001F64F"  # Emoticons
+        "\U0001F300-\U0001F5FF"  # Símbolos y pictogramas
+        "\U0001F680-\U0001F6FF"  # Transporte y mapas
+        "\U0001F700-\U0001F77F"  # Alquimia
+        "\U0001F780-\U0001F7FF"  # Geometría
+        "\U0001F800-\U0001F8FF"  # Variaciones de flechas
+        "\U0001F900-\U0001F9FF"  # Manos, animales, gestos
+        "\U0001FA00-\U0001FA6F"  # Objetos adicionales
+        "\U0001FA70-\U0001FAFF"  # Símbolos adicionales
+        "\U00002702-\U000027B0"  # Dingbats
+        "\U000024C2-\U0001F251"  # Símbolos adicionales
+        "]+", flags=re.UNICODE
+    )
     return emoji_pattern.sub(r'', text)
 
 def limpiar_texto(texto):
@@ -76,7 +83,6 @@ def formatear_telefono(number):
         return cleaned_number
     
     else:
-        print("telefono invalido")
         return None  # Retornar el original si es inválido
 
 

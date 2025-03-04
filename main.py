@@ -7,43 +7,48 @@ import beaware_secrets
 def main():
     """Flujo principal de la aplicación."""
     message_list = []  # Lista de mensajes a almacenar en JSON
-    case_list = []     # Lista de casos a almacenar en JSON
-    image_counter = 0
-    
+    case_list = []     # Lista de casos a almacenar en JSON    
 
-    # # Obtención de los datos de Wolkvox
-    # chats_data = wolkvox_api_requests.fetch_chats()
+    # Obtención de los datos de Wolkvox
+    chats_data = wolkvox_api_requests.fetch_chats()
 
-    # # Filtra chats con el código de actividad "Consulta"
-    # filtered_chats = [chat for chat in chats_data if chat.get("cod_act") == "Consulta"]
-    # conversations_data = wolkvox_api_requests.fetch_conversations()
+    # Filtra chats con el código de actividad "Consulta"
+    filtered_chats = [chat for chat in chats_data if chat.get("cod_act") == "Consulta"]
+    print("Filtrando por cod_Act Consulta")
+
+    conversations_data = wolkvox_api_requests.fetch_conversations()
 
     # Obtiene el token para luego crear al cliente que mantendrá la comunicación con la API
     token = beaware_api_requests.login()
     if not token:
         raise Exception("No se pudo obtener el token")
     
+    print("Token obtenido")
+    
+    # Crear cliente que se comunicara con la api de BeAware
     client = APIClient(beaware_secrets.COMPANY, beaware_secrets.USER, token)
 
+    if not client:
+        print("Ocurrió un problema al crear al cliente")
+        
     types = beaware_api_requests.obtainTypes(client)
-    print(types)
+    print(f"Tipos: {types}")
 
-    productos = beaware_api_requests.obtainProducts(client)
-    print(productos)
+    products = beaware_api_requests.obtainProducts(client)
+    print(f"Productos: {products}")
 
-    # contact_list = beaware_api_requests.obtainContacts(client)
+    contact_list = beaware_api_requests.obtainContacts(client)
+    print("Contactos de BeAware obtenidos")
 
     
-    # # Procesa cada chat filtrado
-    # for chat in filtered_chats:
-    #     image_counter = create_functions.process_chat(client, chat, conversations_data, contact_list, case_list, message_list, types, image_counter)
+    # Procesa cada chat filtrado
+    for chat in filtered_chats:
+        create_functions.process_chat(client, chat, conversations_data, contact_list, case_list, message_list, types)
 
-    # # Almacena las listas en los JSON correspondientes
-    # create_functions.almacenarContactos(contact_list)
-    # create_functions.almacenarMensajes(message_list)
-    # create_functions.almacenarCasos(case_list)
-
-    # print("Imágenes obtenidas:", image_counter)
+    # Almacena las listas en los JSON correspondientes
+    create_functions.almacenarContactos(contact_list)
+    create_functions.almacenarMensajes(message_list)
+    create_functions.almacenarCasos(case_list)
 
 
 if __name__ == "__main__":

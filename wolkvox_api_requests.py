@@ -3,7 +3,7 @@ import wolkvox_secrets
 
 #Intervalo de fechas que acotarán la solicitud.
 #Formato: YYYYmmddHHiiss
-DATE_INI = "20250218000000"
+DATE_INI = "20250302000000"
 DATE_END = "20250303000000"
 
 def fetch_chats():
@@ -17,6 +17,7 @@ def fetch_chats():
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  # Lanza un error si el request falla
+        print("Chats obtenidos de Wolkvox")
         return response.json().get("data", [])
     except requests.RequestException as e:
         print(f"Error al obtener los chats: {e}")
@@ -35,6 +36,7 @@ def fetch_conversations():
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
+        print("Conversaciones obtenidas de wolkvox")
         return response.json().get("data", [])
     except requests.RequestException as e:
         print(f"Error al obtener las conversaciones: {e}")
