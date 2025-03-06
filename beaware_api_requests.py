@@ -192,3 +192,16 @@ def addNotes(client, note):
     except Exception as error:
         print("Error en la solicitud al asignar las notas:", error)
     return None
+
+def obtainCases(client):
+    endpoint = "/caso/get/?filtro=history&pagina=1&cantidad=15000"
+
+    try:
+        response = client.make_request(endpoint)
+        types = response['data']
+        return [{"id": item["id"], "asunto": item["asunto"]} for item in types]
+    except requests.exceptions.HTTPError as http_err:
+        print(f"Error HTTP obtener los tipos: {http_err}")
+    except Exception as error:
+        print("Error en la solicitud al obtener los tipos:", error)
+    return None

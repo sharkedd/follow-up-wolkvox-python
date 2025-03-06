@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 def main():
     """Flujo principal de la aplicación."""
     message_list = []  # Lista de mensajes a almacenar en JSON
-    case_list = []     # Lista de casos a almacenar en JSON    
+    case_list = []     # Lista de casos a almacenar en JSON
 
     #Formato: YYYYmmddHHiiss
     #EJEMPLO: 20250305000000
@@ -55,8 +55,12 @@ def main():
     contact_list = beaware_api_requests.obtainContacts(client)
     print("Contactos de BeAware obtenidos")
 
+    case_list = beaware_api_requests.obtainCases(client)
+    print("Casos de BeAware obtenidos")
+
     
     # Procesa cada chat filtrado
+    print("Comenzando procesamiento...")
     for chat in filtered_chats:
         create_functions.process_chat(client, chat, conversations_data, contact_list, case_list, message_list, types, products)
 

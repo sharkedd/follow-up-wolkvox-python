@@ -70,6 +70,9 @@ def findContact(identificador, contact_list):
     """
     return next((c for c in contact_list if c["identificador"] == identificador), None) 
 
+def find_case(asunto_caso, case_list):
+    return next((c for c in case_list if c["asunto"] == asunto_caso), None) 
+
 
 def build_case(client, chat, case_list, contact_id, types, products):
     """Construye y retorna el diccionario del caso a partir del chat."""
@@ -77,6 +80,11 @@ def build_case(client, chat, case_list, contact_id, types, products):
         f"{chat.get('date')}-{chat.get('cod_act')}/"
         f"{chat.get('description_cod_act')}-{chat.get('conn_id')}"
     )
+
+    existing_case = find_case(asunto, case_list)
+    if(existing_case):
+        print("Caso ya existe, cancelando creación")
+        return None
 
     print(f"Asunto del caso a crear: {asunto}")
     id_producto = get_product_id_by_cod_act(chat.get("cod_act"), products)
