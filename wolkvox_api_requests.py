@@ -1,19 +1,18 @@
 import requests
 import wolkvox_secrets
 
-#Intervalo de fechas que acotarán la solicitud.
-#Formato: YYYYmmddHHiiss
-DATE_INI = "20250302000000"
-DATE_END = "20250303000000"
 
-def fetch_chats():
+#Intervalo de fechas que acotarán la solicitud.
+
+
+def fetch_chats(date_ini, date_end):
     """Obtiene la lista de chats de Wolkvox."""
-    url = f"https://wv{wolkvox_secrets.WOLKVOX_SERVER}.wolkvox.com/api/v2/reports_manager.php?api=chat_1&date_ini={DATE_INI}&date_end={DATE_END}"
+    url = f"https://wv{wolkvox_secrets.WOLKVOX_SERVER}.wolkvox.com/api/v2/reports_manager.php?api=chat_1&date_ini={date_ini}&date_end={date_end}"
     headers = {
         "wolkvox_server": wolkvox_secrets.WOLKVOX_SERVER,
         "wolkvox-token": wolkvox_secrets.WOLKVOX_TOKEN
     }
-
+    
     try:
         response = requests.get(url, headers=headers)
         response.raise_for_status()  # Lanza un error si el request falla
@@ -25,9 +24,9 @@ def fetch_chats():
     
 
 
-def fetch_conversations():
+def fetch_conversations(date_ini, date_end):
     """Obtiene la lista de conversaciones de Wolkvox."""
-    url = f"https://wv{wolkvox_secrets.WOLKVOX_SERVER}.wolkvox.com/api/v2/reports_manager.php?api=chat_2&date_ini={DATE_INI}&date_end={DATE_END}"
+    url = f"https://wv{wolkvox_secrets.WOLKVOX_SERVER}.wolkvox.com/api/v2/reports_manager.php?api=chat_2&date_ini={date_ini}&date_end={date_end}"
     headers = {
         "wolkvox_server": wolkvox_secrets.WOLKVOX_SERVER,
         "wolkvox-token": wolkvox_secrets.WOLKVOX_TOKEN

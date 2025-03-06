@@ -71,7 +71,7 @@ def findContact(identificador, contact_list):
     return next((c for c in contact_list if c["identificador"] == identificador), None) 
 
 
-def build_case(client, chat, case_list, contact_id, types):
+def build_case(client, chat, case_list, contact_id, types, products):
     """Construye y retorna el diccionario del caso a partir del chat."""
     asunto = (
         f"{chat.get('date')}-{chat.get('cod_act')}/"
@@ -79,13 +79,13 @@ def build_case(client, chat, case_list, contact_id, types):
     )
 
     print(f"Asunto del caso a crear: {asunto}")
-    id_producto = get_product_id_by_cod_act(chat.get("cod_act"), types)
+    id_producto = get_product_id_by_cod_act(chat.get("cod_act"), products)
 
     caso = {
         "idcontacto": contact_id,
         "idproducto": id_producto or 4, # MIENTRAS TANTO, SI NO SE ENCUENTRA EL PRODUCTO, SE PASARÁ COMO "Consulta"
-        "idtipo": 1, # EN LO QUE LLEGA FELIPE PARA RESPONDER DUDAS, SE UTILIZARÁ TIPO 1
-        "idsubtipo": 1, # LO MISMO CON SUBTIPO
+        "idtipo": 6, # Tipo Pendiente
+        "idsubtipo": 22, # Subtipo Pendiente
         "asunto": asunto,
         "origen": chat.get("channel") or "whatsapp|",
     }
@@ -139,7 +139,7 @@ def process_messages(client, conversation_info, message_list, case_id):
         return note
 
 
-def process_chat(client, chat, conversations_data, contact_list, case_list, message_list, types):
+def process_chat(client, chat, conversations_data, contact_list, case_list, message_list, types, products):
     """Procesa un chat individual y actualiza las listas de contactos, casos y mensajes."""
     # Procesa el contacto
     contacto = build_contact(client, chat, contact_list)
@@ -156,7 +156,7 @@ def process_chat(client, chat, conversations_data, contact_list, case_list, mess
     # SI CONTACTO SE CREA EXITOSAMENTE, OBTENER ID Y AGREGAR A LISTA
     # SI NO, CANCELAR EL FLUJO CORRESPONDIENTE AL CONTACTO, Y SEGUIR CON EL SIGUIENTE
 
-    case = build_case(client, chat, case_list, id_contacto, types)
+    case = build_case(client, chat, case_list, id_contacto, types, products)
 
     if not case:
         return None

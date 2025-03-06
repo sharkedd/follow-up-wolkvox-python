@@ -3,20 +3,35 @@ import beaware_api_requests
 import create_functions
 import wolkvox_api_requests
 import beaware_secrets
+from datetime import datetime, timedelta
+
 
 def main():
     """Flujo principal de la aplicación."""
     message_list = []  # Lista de mensajes a almacenar en JSON
     case_list = []     # Lista de casos a almacenar en JSON    
 
+    #Formato: YYYYmmddHHiiss
+    #EJEMPLO: 20250305000000
+    #EJEMPLO: 20250306000000
+
+    # Obtener la fecha y hora actual
+    now = datetime.now()
+    date_end = now.strftime("%Y%m%d%H%M%S")
+    print(f"Hora limitante: {date_end}")
+
+    one_hour_ago = now - timedelta(hours=5)
+    date_ini = one_hour_ago.strftime("%Y%m%d%H%M%S")
+    print(f"Hora inicio: {date_ini}")
+
     # Obtención de los datos de Wolkvox
-    chats_data = wolkvox_api_requests.fetch_chats()
+    chats_data = wolkvox_api_requests.fetch_chats(date_ini, date_end)
 
     # Filtra chats con el código de actividad "Consulta"
-    filtered_chats = [chat for chat in chats_data if chat.get("cod_act") == "Consulta"]
+    filtered_chats = [chat for chat in chats_data if (chat.get("cod_act") == "Consulta" or chat.get("cod_act") == "Reclamo")]
     print("Filtrando por cod_Act Consulta")
 
-    conversations_data = wolkvox_api_requests.fetch_conversations()
+    conversations_data = wolkvox_api_requests.fetch_conversations(date_ini, date_end)
 
     # Obtiene el token para luego crear al cliente que mantendrá la comunicación con la API
     token = beaware_api_requests.login()
@@ -43,7 +58,7 @@ def main():
     
     # Procesa cada chat filtrado
     for chat in filtered_chats:
-        create_functions.process_chat(client, chat, conversations_data, contact_list, case_list, message_list, types)
+        create_functions.process_chat(client, chat, conversations_data, contact_list, case_list, message_list, types, products)
 
     # Almacena las listas en los JSON correspondientes
     create_functions.almacenarContactos(contact_list)
