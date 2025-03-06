@@ -1,3 +1,4 @@
+from http.client import CannotSendRequest
 import json
 import create_functions
 import decode_images
@@ -18,101 +19,170 @@ def obtain_conversation_info_from_chat(conn_id, conversations_array):
     return None
 
 
-def build_contact(chat):
-    """Construye y retorna el diccionario de contacto a partir del chat."""
-    customer_name = chat.get("customer_name")
+
+def build_contact(client, chat, contact_list):
+    """Construye y retorna el formato de contacto a partir del chat."""
+    
+    telefono = chat.get("customer_phone")
+    if not telefono:
+        print("Contacto no tiene teléfono")
+        return None  # Validación temprana: Si no hay teléfono, no se puede crear un contacto.
+
+    # Buscar si el contacto ya existe
+    contacto = findContact(telefono, contact_list)
+    if contacto:
+        print("Contacto existente encontrado")
+        return contacto  # Si el contacto ya existe, lo retornamos directamente.
+
+    # Procesar el nombre y apellido
+    customer_name = chat.get("customer_name", "")
     full_name = validaciones.procesar_nombre_apellido(customer_name)
-    return {
-        "nombre": full_name["name"],
-        "apellido": full_name["last_name"],
-        "identificador": chat.get("customer_phone"),
-        "email": chat.get("customer_email"),
+    false_mail = [f"{full_name.get("name", "examplename")}.{full_name.get("last_name", "examplelastnanme")}.{telefono}@tarragona.example.com"]
+    # Construir el nuevo contacto
+    contacto = {
+        "nombre": full_name.get("name", ""),
+        "apellido": full_name.get("last_name", ""),
+        "identificador": telefono,
+        "email": false_mail,
         "timezone": "America/Santiago",
     }
 
+    # Intentar crear el contacto en BeAware
+    beaware_contact = beaware_api_requests.createContact(client, contacto)
+    if not beaware_contact:
+        return None  # Si la API falla, retornamos None.
 
-def build_case(chat):
+    # Construcción del objeto final con el ID retornado por la API
+
+    # Agregar a la lista de contactos
+    contact_list.append(beaware_contact)
+    print("Contacto agregado a contact_list")
+    
+    return beaware_contact
+
+
+def findContact(identificador, contact_list):
+    """
+    Busca un contacto a través de su identificador en el array de contactos
+
+    :param contact_identifier: Identificador del contacto, corresponde al teléfono
+    :param contact_array: Array que contiene los contactos obtenidos de BeAware, junto a los creados en ejecución
+    """
+    return next((c for c in contact_list if c["identificador"] == identificador), None) 
+
+def find_case(asunto_caso, case_list):
+    return next((c for c in case_list if c["asunto"] == asunto_caso), None) 
+
+
+def build_case(client, chat, case_list, contact_id, types, products):
     """Construye y retorna el diccionario del caso a partir del chat."""
     asunto = (
         f"{chat.get('date')}-{chat.get('cod_act')}/"
         f"{chat.get('description_cod_act')}-{chat.get('conn_id')}"
     )
-    return {
-        "idcontacto": "***___OBTENER___***",
-        "idproducto": chat.get("cod_act"),
-        "idtipo": chat.get("description_cod_act"),
-        "subtipo": "***___OBTENER___***",
+
+    existing_case = find_case(asunto, case_list)
+    if(existing_case):
+        print("Caso ya existe, cancelando creación")
+        return None
+
+    print(f"Asunto del caso a crear: {asunto}")
+    id_producto = get_product_id_by_cod_act(chat.get("cod_act"), products)
+
+    caso = {
+        "idcontacto": contact_id,
+        "idproducto": id_producto or 4, # MIENTRAS TANTO, SI NO SE ENCUENTRA EL PRODUCTO, SE PASARÁ COMO "Consulta"
+        "idtipo": 6, # Tipo Pendiente
+        "idsubtipo": 22, # Subtipo Pendiente
         "asunto": asunto,
-        "origen": chat.get("channel"),
+        "origen": chat.get("channel") or "whatsapp|",
     }
 
+    beaware_case = beaware_api_requests.createCase(client, caso)
+    if not beaware_case:
+        return None  # Si la API falla, retornamos None.    
+    
+    case_list.append(beaware_case)
+    print("Caso agregado a la lista case_list")
+    return beaware_case
 
-def process_messages(client, conversation_info, message_list, image_counter):
+def get_product_id_by_cod_act(cod_act, types):
+    return next((t["id"] for t in types if t["nombre"] == cod_act), None)
+
+    
+
+def process_messages(client, conversation_info, message_list, case_id):
     """
     Procesa cada mensaje de la conversación.
     
     - Si el mensaje es válido (texto), lo agrega a message_list.
     - Si no, asume que es un archivo, llamando a la función addFile para subirlo a BeAware
     """
-    message = ""
+    messages = [] 
+
     for mensaje in conversation_info:
         if validaciones.es_mensaje_valido(mensaje.get('message')):
-            # Es un mensaje
-
-            message = f"{message} {mensaje.get('from')} {mensaje.get('from_name')}: {mensaje.get('message')}<br>"
-        
+            messages.append(f"{mensaje.get('from')} {mensaje.get('from_name')}: {mensaje.get('message')}<br>")
         else:
-            # Es una imagen
             fecha_para_asunto = validaciones.transform_date_format(mensaje.get('date'))
             asunto_mensaje = f"{mensaje.get('from_name')}{fecha_para_asunto}{mensaje.get('customer_phone')}"
             file_format, base64_data = decode_images.extract_base64_image(mensaje.get('message'))
             if file_format and base64_data:
-                beaware_api_requests.addFile(client, base64_data, file_format, asunto_mensaje, 466, 6)
-                # Función save_image.... guarda la imagen en el computador 
-                # decode_images.save_image_from_base64(mensaje.get('message'), asunto_mensaje)
-                image_counter += 1
+                beaware_api_requests.addFile(client, base64_data, file_format, asunto_mensaje, case_id, 9) #9 ES LA ID DEL USUARIO JCARRILLO
             else:
                 print("No se pudo extraer la imagen en base64 del mensaje.")
-    if(message):
-            # Se eliminan los emojis de los mensajes, pues BeAware no los soporta
-            message = validaciones.remove_emojis(message)
-            # Formato de nota que sigue BeAware
-            nota = {
-                "idobjeto": "***___OBTENER___***",
-                "tipoobjeto": "casos",
-                "texto": message,
-                "privado": 1
-            }
-            
-            #Incluir lógica para adjuntar nota a caso
-            message_list.append(message)
-        
-    return image_counter
+    
+    if messages:
+        conversation = " ".join(messages)  # Se unen todas als interacciones en un string
+        conversation_without_emojis = validaciones.remove_emojis(conversation)
+        note = {
+            "idobjeto": case_id,
+            "tipoobjeto": "casos",
+            "texto":  f"<p>{conversation_without_emojis}</p>",
+            "privado": 1
+        }
+
+        beaware_note = beaware_api_requests.addNotes(client, note)
+        message_list.append(beaware_note)
+        return note
 
 
-def process_chat(client, chat, conversations_data, contact_list, case_list, message_list, image_counter):
+def process_chat(client, chat, conversations_data, contact_list, case_list, message_list, types, products):
     """Procesa un chat individual y actualiza las listas de contactos, casos y mensajes."""
-    # Procesa el contacto y el caso
-    contacto = build_contact(chat)
-    contact_list.append(contacto)
-    caso = build_case(chat)
-    case_list.append(caso)
+    # Procesa el contacto
+    contacto = build_contact(client, chat, contact_list)
+    
+    if not contacto:
+        return None
+    
+    id_contacto = contacto.get("id")
+    if not id_contacto:
+        print("Fallo al obtener la id del contacto")
+        return None
 
-    # Obtiene la conversación del chat
+    # AGREGAR LÓGICA PARA CREAR CONTACTO EN BE AWARE
+    # SI CONTACTO SE CREA EXITOSAMENTE, OBTENER ID Y AGREGAR A LISTA
+    # SI NO, CANCELAR EL FLUJO CORRESPONDIENTE AL CONTACTO, Y SEGUIR CON EL SIGUIENTE
+
+    case = build_case(client, chat, case_list, id_contacto, types, products)
+
+    if not case:
+        return None
+    
+    case_id = case.get("id")
+    if not case_id:
+        print("No se pudo obtener la id del caso")
+        return None
+
     conversation_info = obtain_conversation_info_from_chat(chat.get("conn_id"), conversations_data)
     if not conversation_info:
-        return image_counter
-
-    print(f"Customer name: {chat.get('customer_name')}")
-    print(f"Razón: {chat.get('cod_act')}")
-    # Se llama a la función para almacenar mensajes, si es que ese comportamiento es requerido aquí.
-    create_functions.almacenarMensajes(chat.get('customer_name'))
+        return None
 
     # Procesa los mensajes
-    image_counter = process_messages(client, conversation_info, message_list, image_counter)
+    beaware_message = process_messages(client, conversation_info, message_list, case_id)
     print(f"\nInteracciones totales: {len(conversation_info)}")
     print("-" * 140)
-    return image_counter
+    return 
 
 
 
